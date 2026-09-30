@@ -1,1 +1,58 @@
-
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TOPO Mz12 Mirador Gaviotas - GIL BASTIDAS</title>
+<style>
+body{margin:0;overflow:hidden;background:#0a1628;color:#fff;font-family:system-ui}
+#hud{position:absolute;top:10px;left:10px;background:rgba(0,0,0,.9);padding:12px;border-radius:12px;border:1px solid #0f0;max-width:320px;font-size:12px;z-index:10}
+.b{margin:6px 0;padding:6px;background:rgba(255,255,255,.07);border-radius:6px}
+.green{color:#0f0;font-weight:bold}.yellow{color:#ffd700}
+#info{position:absolute;bottom:10px;left:10px;background:rgba(0,0,0,.7);padding:8px;border-radius:8px;font-size:11px}
+</style>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
+</head>
+<body>
+<div id="hud">
+<b>🏗️ LEVANTAMIENTO TOPO Mz12 3D</b><br><span style="color:#5af">Mirador Gaviotas - Santa Marta</span>
+<div class="b"><span class="green">LOTE 9:</span> P=76.176m A=345.92m²<br>xv=19.04m Amax=362.6m² <b style="color:#0f0">95.4% ⭐</b></div>
+<div class="b"><span class="yellow">LOTE 10:</span> P=80.461m A=356.59m²<br>xv=20.11m Amax=404.6m² 88.1%</div>
+<div class="b"><span class="yellow">LOTE 11:</span> P=119.13m A=802.54m²<br>xv=29.78m Amax=887m² 90.5%</div>
+<div style="font-size:10px;margin-top:6px">GIL BASTIDAS ARQ - Alt 2.85m - MAGNA SIRGAS 1:2500<br>Toca y arrastra para girar</div>
+</div>
+<div id="info">🟩 L9 (95%) 🟨 L10 🟧 L11 | Azul=óptimo teórico P/4</div>
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x87CEEB);scene.fog=new THREE.Fog(0x87CEEB,80,200);
+const camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,0.1,500);camera.position.set(40,-60,45);
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;
+document.body.appendChild(renderer.domElement);
+const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;
+scene.add(new THREE.AmbientLight(0xffffff,0.7));
+const sun=new THREE.DirectionalLight(0xffffff,0.9);sun.position.set(30,50,40);sun.castShadow=true;scene.add(sun);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(200,200),new THREE.MeshStandardMaterial({color:0x1a3a2a}));
+ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
+const grid=new THREE.GridHelper(200,20,0x334455,0x223344);grid.position.y=0.01;scene.add(grid);
+const baseX=984820,baseY=1724190;function toLocal(x,y){return [x-baseX,y-baseY];}
+const lote9=[[984845.927,1724216.417],[984829.649,1724221.708],[984830.092,1724196.868],[984845.748,1724197.89]];
+const lote10=[[984846.086,1724234.805],[984828.209,1724245.699],[984829.649,1724221.708],[984845.918,1724216.42]];
+const lote11=[[984873.537,1724217.038],[984871.708,1724219.192],[984846.086,1724234.805],[984845.918,1724216.42],[984845.927,1724216.417],[984845.748,1724197.89],[984864.993,1724197.981],[984874.484,1724196.53]];
+function createLote(points,color,height,label){
+ const shape=new THREE.Shape();points.forEach((p,i)=>{const [x,y]=toLocal(p[0],p[1]);if(i===0)shape.moveTo(x,y);else shape.lineTo(x,y);});
+ const geo=new THREE.ExtrudeGeometry(shape,{depth:height,bevelEnabled:false});
+ const mat=new THREE.MeshStandardMaterial({color:color,transparent:true,opacity:0.85});
+ const mesh=new THREE.Mesh(geo,mat);mesh.rotation.x=-Math.PI/2;mesh.position.y=height/2;mesh.castShadow=true;scene.add(mesh);
+ const cx=points.reduce((s,p)=>s+p[0],0)/points.length;const cy=points.reduce((s,p)=>s+p[1],0)/points.length;const [lx,ly]=toLocal(cx,cy);
+ const canvas=document.createElement('canvas');canvas.width=512;canvas.height=128;const ctx=canvas.getContext('2d');ctx.fillStyle='black';ctx.fillRect(0,0,512,128);ctx.fillStyle='white';ctx.font='bold 26px monospace';ctx.fillText(label,10,70);
+ const tex=new THREE.CanvasTexture(canvas);const spr=new THREE.Sprite(new THREE.SpriteMaterial({map:tex}));spr.position.set(lx,height+8,ly);spr.scale.set(18,4.5,1);scene.add(spr);return mesh;
+}
+createLote(lote9,0x00ff88,2.85,'L9 P76.1 A345 95%');
+createLote(lote10,0xffd700,2.4,'L10 P80.4 A356 88%');
+createLote(lote11,0xff8800,2.85,'L11 P119 A802 90%');
+controls.target.set(25,0,30);controls.update();
+function animate(){requestAnimationFrame(animate);controls.update();renderer.render(scene,camera);}animate();
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+</script>
+</body>
+</html>
